@@ -1,99 +1,125 @@
-# PDF RAG Chatbot
+# 📚 AI PDF Assistant
 
-AI-powered PDF chatbot using Streamlit, Ollama, FAISS and Sentence Transformers.
+AI-powered PDF chatbot built using Streamlit, Ollama, FAISS, and Sentence Transformers.
 
-## Features
+## 🚀 Features
 
-* Upload and chat with any PDF document
-* Semantic search using vector embeddings
-* Retrieval-Augmented Generation (RAG)
-* Local LLM inference using Ollama
-* Streamlit web interface
-* Chat history support
-* Source citations for answers
-* PDF summarization
+- Upload any PDF document
+- Ask questions about the document
+- AI-generated document summaries
+- Semantic search using vector embeddings
+- Source references for answers
+- Local AI inference using Ollama
+- Modern Streamlit interface
 
-## Tech Stack
+---
 
-* Python
-* Streamlit
-* FAISS
-* Sentence Transformers
-* Ollama
-* Llama 3.2
+## 🛠️ Tech Stack
 
-## Project Structure
+- Python
+- Streamlit
+- Ollama
+- Llama 3.2
+- FAISS
+- Sentence Transformers
+- PyPDF
+
+---
+
+## 📸 Screenshots
+
+### Upload PDF
+
+![Upload Screen](assets/upload.png)
+
+---
+
+### Chat with PDF
+
+![Chat Screen](assets/chat.png)
+
+---
+
+### Document Summary
+
+![Summary Screen](assets/summary.png)
+
+---
+
+## 📂 Project Structure
 
 ```text
 rag-chatbot/
+├── assets/
 ├── documents/
-│   └── README.txt
 ├── src/
 │   ├── app.py
-│   ├── ingest.py
-│   ├── retriever.py
 │   ├── chatbot.py
-│   └── archive/
+│   ├── retriever.py
+│   └── ingest.py
 ├── requirements.txt
 ├── .gitignore
 └── README.md
 ```
 
-## Installation
+## ⚙️ Installation
 
-1. Clone the repository
+Clone the repository:
 
 ```bash
 git clone https://github.com/Hibza-Kudari/rag-chatbot.git
 cd rag-chatbot
 ```
 
-2. Create a virtual environment
+Create virtual environment:
 
 ```bash
 python -m venv venv312
 ```
 
-3. Activate the environment
+Activate environment:
 
 ```bash
 venv312\Scripts\activate
 ```
 
-4. Install dependencies
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-5. Install Ollama and pull a model
+Install Ollama model:
 
 ```bash
 ollama pull llama3.2
 ```
 
-## Run the Application
+---
+
+## ▶️ Run
 
 ```bash
 streamlit run src/app.py
 ```
 
-## Usage
+Open:
 
-1. Launch the Streamlit application.
-2. Upload any PDF document.
-3. Build the knowledge base.
-4. Ask questions about the uploaded document.
-5. View source chunks used to generate answers.
+```text
+http://localhost:8501
+```
 
-## Future Improvements
+---
 
-* Faster retrieval
-* Multi-PDF support
-* Conversation memory
-* Document comparison
-* Cloud deployment
+## 💡 Usage
 
-## Author
+1. Upload a PDF
+2. Generate a document summary
+3. Ask questions about the PDF
+4. View source references used by the chatbot
 
-Hibza Kudari
+---
+
+## 👩‍💻 Author
+
+**Hibza Kudari**
