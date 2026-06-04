@@ -1,0 +1,17 @@
+venv/
+venv312/
+
+__pycache__/
+*.pyc
+.vscode/
+
+vectorstore/
+
+documents/uploaded.pdf
+
+.cache/
+
+.env
+
+*.bin
+*.pkl
