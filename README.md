@@ -143,26 +143,14 @@ rag-chatbot/
 
 ## 📸 Screenshots
 
-
 ### PDF Upload
-
-```text
-assets/upload.png
-```
+![PDF Upload](assets/upload.png)
 
 ### Question Answering
-
-
-```text
-assets/chat.png
-```
+![Question Answering](assets/chat.png)
 
 ### Document Summary
-
-```text
-assets/summary.png
-```
-
+![Document Summary](assets/summary.png)
 ---
 
 ## 🔮 Future Enhancements
