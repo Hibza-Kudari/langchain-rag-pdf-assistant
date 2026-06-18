@@ -1,6 +1,8 @@
 from retriever import retrieve
 import ollama
 
+from config import CHAT_MODEL
+
 while True:
 
     query = input("\nAsk a question (or type exit): ")
@@ -26,7 +28,7 @@ If the answer is not in the context, say:
 """
 
     response = ollama.chat(
-        model="llama3.2",
+        model=CHAT_MODEL,
         messages=[
             {
                 "role": "user",

@@ -7,8 +7,6 @@ __pycache__/
 
 vectorstore/
 
-documents/uploaded.pdf
-
 .cache/
 
 .env

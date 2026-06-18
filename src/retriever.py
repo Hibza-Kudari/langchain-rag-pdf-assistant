@@ -1,63 +1,89 @@
-from sentence_transformers import SentenceTransformer
-import faiss
-import pickle
-import numpy as np
+import os
 
-# Load vector database
-index = faiss.read_index(
-    "vectorstore/faiss_index.bin"
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+
+from config import (
+    VECTORSTORE_DIR,
+    EMBEDDING_MODEL,
+    RETRIEVAL_K,
 )
 
-# Load chunks
-with open(
-    "vectorstore/chunks.pkl",
-    "rb"
-) as f:
-    chunks = pickle.load(f)
-
-# Load embedding model
-model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
-)
+_vectorstore = None
+_embeddings = None
 
 
-def retrieve(query, k=2):
-
-    query_embedding = model.encode(
-        [query]
+def vectorstore_exists():
+    return os.path.exists(
+        os.path.join(
+            VECTORSTORE_DIR,
+            "index.faiss",
+        )
     )
 
-    distances, indices = index.search(
-        np.array(query_embedding).astype(
-            "float32"
-        ),
-        k
-    )
 
-    results = []
+def _get_embeddings():
+    global _embeddings
 
-    for i in indices[0]:
-        results.append(
-            chunks[i]
+    if _embeddings is None:
+        _embeddings = HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL
         )
 
-    return results
+    return _embeddings
 
 
-if __name__ == "__main__":
+def _load():
+    global _vectorstore
 
-    question = input(
-        "Ask a question: "
-    )
+    if _vectorstore is not None:
+        return
 
-    results = retrieve(
-        question
-    )
-
-    print("\nResults:\n")
-
-    for chunk in results:
-        print(chunk)
-        print(
-            "\n" + "=" * 50 + "\n"
+    if not vectorstore_exists():
+        raise FileNotFoundError(
+            "No vector store found. Upload a PDF first."
         )
+
+    _vectorstore = FAISS.load_local(
+        VECTORSTORE_DIR,
+        _get_embeddings(),
+        allow_dangerous_deserialization=True,
+    )
+
+
+def reload():
+    global _vectorstore
+
+    _vectorstore = None
+    _load()
+
+
+def get_all_chunks():
+    _load()
+
+    docs = _vectorstore.similarity_search(
+        "",
+        k=100,
+    )
+
+    return [
+        doc.page_content
+        for doc in docs
+    ]
+
+
+def retrieve(
+    query,
+    k=RETRIEVAL_K,
+):
+    _load()
+
+    docs = _vectorstore.similarity_search(
+        query,
+        k=k,
+    )
+
+    return [
+        doc.page_content
+        for doc in docs
+    ]

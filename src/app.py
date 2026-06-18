@@ -1,9 +1,6 @@
-import streamlit as st
-import ollama
-import subprocess
-import sys
+import hashlib
 
-from retriever import retrieve
+import streamlit as st
 
 # ---------------------------------
 # Page Configuration
@@ -13,14 +10,15 @@ st.set_page_config(
     page_title="AI PDF Assistant",
     page_icon="📚",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 # ---------------------------------
 # Custom Styling
 # ---------------------------------
 
-st.markdown("""
+st.markdown(
+    """
 <style>
 
 #MainMenu {visibility: hidden;}
@@ -41,7 +39,9 @@ h1 {
 }
 
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------
 # Session State
@@ -49,6 +49,21 @@ h1 {
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+if "processed_file_id" not in st.session_state:
+    st.session_state.processed_file_id = None
+
+if "document_ready" not in st.session_state:
+    st.session_state.document_ready = False
+
+if "current_doc_name" not in st.session_state:
+    st.session_state.current_doc_name = None
+
+
+def _file_id(name, data: bytes) -> str:
+    digest = hashlib.sha256(data).hexdigest()[:16]
+    return f"{name}:{digest}"
+
 
 # ---------------------------------
 # Sidebar
@@ -60,7 +75,8 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.markdown("""
+    st.markdown(
+        """
 ### Features
 
 ✅ Upload any PDF
@@ -72,21 +88,25 @@ with st.sidebar:
 ✅ Source References
 
 ✅ Local AI (Ollama)
-""")
+"""
+    )
+
+    st.markdown("---")
+
+    if st.session_state.document_ready and st.session_state.current_doc_name:
+        st.info(f"📄 Active: **{st.session_state.current_doc_name}**")
+    else:
+        st.caption("No document loaded yet.")
 
     st.markdown("---")
 
     if st.button("🗑 Clear Chat"):
-
         st.session_state.messages = []
-
         st.rerun()
 
     st.markdown("---")
 
-    st.caption(
-        "Powered by Ollama + FAISS + MiniLM"
-    )
+    st.caption("Powered by Ollama + FAISS + MiniLM")
 
 # ---------------------------------
 # Main Header
@@ -94,59 +114,49 @@ with st.sidebar:
 
 st.title("📚 AI PDF Assistant")
 
-st.caption(
-    "Upload any PDF and chat with it using AI"
-)
+st.caption("Upload a PDF below — no backend access needed.")
 
 # ---------------------------------
-# PDF Upload
+# PDF Upload (frontend only)
 # ---------------------------------
 
 uploaded_file = st.file_uploader(
     "Upload a PDF",
-    type=["pdf"]
+    type=["pdf"],
+    help="Select a PDF from your computer. It is processed in this session only.",
 )
 
 if uploaded_file is not None:
+    pdf_bytes = uploaded_file.getvalue()
+    file_id = _file_id(uploaded_file.name, pdf_bytes)
 
-    with open(
-        "documents/uploaded.pdf",
-        "wb"
-    ) as f:
+    if file_id != st.session_state.processed_file_id:
 
-        f.write(
-            uploaded_file.getbuffer()
-        )
+        with st.spinner("🔄 Reading and indexing your PDF..."):
+            try:
+                from ingest import ingest_pdf
+                from retriever import reload
 
-    st.success(
-        f"📄 Uploaded: {uploaded_file.name}"
-    )
+                chunk_count = ingest_pdf(pdf_bytes)
+                reload()
 
-    with st.spinner(
-        "🔄 Building Knowledge Base..."
-    ):
+                st.session_state.processed_file_id = file_id
+                st.session_state.document_ready = True
+                st.session_state.current_doc_name = uploaded_file.name
+                st.session_state.messages = []
 
-        result = subprocess.run(
-            [sys.executable, "src/ingest.py"],
-            capture_output=True,
-            text=True
-        )
-
-    if result.returncode == 0:
+            except Exception as exc:
+                st.session_state.document_ready = False
+                st.error(f"❌ Failed to process PDF: {exc}")
+                st.stop()
 
         st.success(
-            "✅ Knowledge Base Built Successfully!"
+            f"✅ **{uploaded_file.name}** ready — "
+            f"{chunk_count} sections indexed. You can ask questions now."
         )
 
-    else:
-
-        st.error(
-            "❌ Error Building Knowledge Base"
-        )
-
-        st.code(
-            result.stderr
-        )
+    elif st.session_state.document_ready:
+        st.success(f"📄 **{uploaded_file.name}** is loaded and ready.")
 
 # ---------------------------------
 # PDF Summary
@@ -154,23 +164,21 @@ if uploaded_file is not None:
 
 if st.button(
     "📄 Generate Document Summary",
-    use_container_width=True
+    use_container_width=True,
 ):
 
-    import pickle
+    if not st.session_state.document_ready:
+        st.warning("Please upload a PDF first.")
+    else:
+        from retriever import get_all_chunks
 
-    with open(
-        "vectorstore/chunks.pkl",
-        "rb"
-    ) as f:
-        all_chunks = pickle.load(f)
+        import ollama
+        from config import SUMMARY_MODEL
 
-    context = "\n\n".join(all_chunks)
+        all_chunks = get_all_chunks()
+        context = "\n\n".join(all_chunks)[:12000]
 
-    # limit context size
-    context = context[:12000]
-
-    prompt = f"""
+        prompt = f"""
 Analyze this document and create a structured summary.
 
 If it is lecture notes:
@@ -192,164 +200,103 @@ Document:
 {context}
 """
 
-    with st.spinner(
-        "Generating summary..."
-    ):
+        with st.spinner("Generating summary..."):
+            response = ollama.chat(
+                model=SUMMARY_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+            )
 
-        response = ollama.chat(
-            model="llama3.2:1b",
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
+        st.subheader("📄 Document Summary")
+        st.markdown(response["message"]["content"])
 
-    st.subheader(
-        "📄 Document Summary"
-    )
-
-    st.markdown(
-        response["message"]["content"]
-    )
 # ---------------------------------
 # Display Chat History
 # ---------------------------------
 
 for message in st.session_state.messages:
-
     with st.chat_message(
         message["role"],
-        avatar="👤" if message["role"] == "user" else "🤖"
+        avatar="👤" if message["role"] == "user" else "🤖",
     ):
-
-        st.markdown(
-            message["content"]
-        )
+        st.markdown(message["content"])
 
 # ---------------------------------
 # Chat Input
 # ---------------------------------
 
-question = st.chat_input(
-    "Ask a question about your PDF..."
-)
+question = st.chat_input("Ask a question about your PDF...")
 
 if question:
 
-    # Save user message
-    st.session_state.messages.append(
-        {
-            "role": "user",
-            "content": question
-        }
-    )
+    if not st.session_state.document_ready:
+        st.warning("Please upload a PDF before asking questions.")
+    else:
+        from retriever import retrieve
 
-    # Display user message
-    with st.chat_message(
-        "user",
-        avatar="👤"
-    ):
+        import ollama
+        from config import CHAT_MODEL
 
-        st.markdown(
-            question
+        st.session_state.messages.append(
+            {"role": "user", "content": question}
         )
 
-    # Retrieve relevant chunks
-    with st.spinner(
-        "Searching document..."
-    ):
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(question)
 
-        chunks = retrieve(
-            question
+        with st.spinner("Searching document..."):
+            chunks = retrieve(question)
+
+        context = "\n\n".join(chunks)
+        
+        chat_history = "\n".join(
+            [
+                f"{msg['role']}: {msg['content']}"
+                for msg in st.session_state.messages[-6:]
+            ]
         )
 
-    context = "\n\n".join(
-        chunks
-    )
-
-    prompt = f"""
+        prompt = f"""
 You are a helpful study assistant.
 
-Answer ONLY from the provided context.
+Use the conversation history and document context
+to answer the user's question.
 
-Format your answer as:
+Conversation History:
+{chat_history}
 
-Definition:
-...
-
-Explanation:
-...
-
-Key Points:
-• ...
-• ...
-• ...
-
-Context:
+Document Context:
 {context}
 
-Question:
+Current Question:
 {question}
 
-If the answer is not present in the context, reply:
+If the answer is not present in the document context,
+say:
 
 I could not find that information in the document.
 """
 
-    # Query Ollama
-    with st.spinner(
-        "Generating answer..."
-    ):
+        with st.spinner("Generating answer..."):
+            response = ollama.chat(
+                model=CHAT_MODEL,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+            )
 
-        response = ollama.chat(
-            model="llama3.2",
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+        answer = response["message"]["content"]
+
+        st.session_state.messages.append(
+            {"role": "assistant", "content": answer}
         )
 
-    answer = response[
-        "message"
-    ][
-        "content"
-    ]
+        with st.chat_message("assistant", avatar="🤖"):
+            st.markdown(answer)
 
-    # Save assistant response
-    st.session_state.messages.append(
-        {
-            "role": "assistant",
-            "content": answer
-        }
-    )
-
-    # Display assistant response
-    with st.chat_message(
-        "assistant",
-        avatar="🤖"
-    ):
-
-        st.markdown(
-            answer
-        )
-
-        with st.expander(
-            "📄 View Sources"
-        ):
-
-            for i, chunk in enumerate(
-                chunks,
-                start=1
-            ):
-
-                st.markdown(
-                    f"### Source {i}"
-                )
-
-                st.code(
-                    chunk
-                )
+            with st.expander("📄 View Sources"):
+                for i, chunk in enumerate(chunks, start=1):
+                    st.markdown(f"### Source {i}")
+                    st.code(chunk)

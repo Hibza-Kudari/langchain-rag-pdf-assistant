@@ -1,48 +1,123 @@
-# 📚 AI PDF Assistant
+# 📚 LangChain-Powered RAG Conversational AI Assistant
 
-AI-powered PDF chatbot built using Streamlit, Ollama, FAISS, and Sentence Transformers.
+An intelligent Retrieval-Augmented Generation (RAG) chatbot that allows users to upload PDF documents, generate AI-powered summaries, and ask context-aware questions using semantic search and local LLM inference.
+
+Built with **LangChain**, **FAISS**, **HuggingFace Embeddings**, **Ollama (Llama 3.2)**, and **Streamlit**.
+
+---
 
 ## 🚀 Features
 
-- Upload any PDF document
-- Ask questions about the document
-- AI-generated document summaries
-- Semantic search using vector embeddings
-- Source references for answers
-- Local AI inference using Ollama
-- Modern Streamlit interface
+✅ Upload and process PDF documents
+
+✅ Semantic document search using vector embeddings
+
+✅ Context-aware question answering
+
+✅ Conversational memory for follow-up questions
+
+✅ AI-generated document summaries
+
+✅ Source-backed responses
+
+✅ Local LLM inference using Ollama
+
+✅ Interactive Streamlit UI
+
+---
+
+## 🏗️ System Architecture
+
+```text
+                    ┌──────────────┐
+                    │   PDF File   │
+                    └──────┬───────┘
+                           │
+                           ▼
+                ┌────────────────────┐
+                │ Text Extraction    │
+                │ (PyPDF)            │
+                └─────────┬──────────┘
+                          │
+                          ▼
+                ┌────────────────────┐
+                │ Text Chunking      │
+                │ LangChain Splitter │
+                └─────────┬──────────┘
+                          │
+                          ▼
+                ┌────────────────────┐
+                │ MiniLM Embeddings  │
+                │ HuggingFace        │
+                └─────────┬──────────┘
+                          │
+                          ▼
+                ┌────────────────────┐
+                │ FAISS Vector Store │
+                │ (LangChain)        │
+                └─────────┬──────────┘
+                          │
+                          ▼
+                 ┌─────────────────┐
+                 │ LangChain       │
+                 │ Retriever       │
+                 └───────┬─────────┘
+                         │
+         User Query      ▼
+      ─────────────► Relevant Chunks
+                         │
+                         ▼
+                ┌────────────────────┐
+                │ Ollama (Llama 3.2) │
+                └─────────┬──────────┘
+                          │
+                          ▼
+                   Final Response
+```
+
+---
+
+## 🧠 How It Works
+
+1. User uploads a PDF document.
+2. PDF text is extracted and split into semantic chunks.
+3. Chunks are converted into vector embeddings using MiniLM.
+4. Embeddings are stored in a FAISS vector database.
+5. User asks a question.
+6. LangChain Retriever finds the most relevant chunks.
+7. Retrieved context is sent to Ollama (Llama 3.2).
+8. The model generates a source-grounded answer.
+
+---
+
+## 📊 Performance Observations
+
+| Document Size | Chunks Generated |
+| ------------- | ---------------- |
+| 9 Pages       | 6 Chunks         |
+| 14 Pages      | 23 Chunks        |
+| 32 Pages      | 56 Chunks        |
+
+Example query response times:
+
+| Query      | Time         |
+| ---------- | ------------ |
+| Question 1 | 2 min 03 sec |
+| Question 2 | 1 min 55 sec |
+| Question 3 | 2 min 26 sec |
 
 ---
 
 ## 🛠️ Tech Stack
 
-- Python
-- Streamlit
-- Ollama
-- Llama 3.2
-- FAISS
-- Sentence Transformers
-- PyPDF
-
----
-
-## 📸 Screenshots
-
-### Upload PDF
-
-![Upload Screen](assets/upload.png)
-
----
-
-### Chat with PDF
-
-![Chat Screen](assets/chat.png)
-
----
-
-### Document Summary
-
-![Summary Screen](assets/summary.png)
+* Python
+* Streamlit
+* LangChain
+* FAISS
+* HuggingFace Embeddings
+* Ollama
+* Llama 3.2
+* PyPDF
 
 ---
 
@@ -50,76 +125,66 @@ AI-powered PDF chatbot built using Streamlit, Ollama, FAISS, and Sentence Transf
 
 ```text
 rag-chatbot/
-├── assets/
-├── documents/
+│
 ├── src/
 │   ├── app.py
-│   ├── chatbot.py
+│   ├── ingest.py
 │   ├── retriever.py
-│   └── ingest.py
+│   ├── config.py
+│
+├── vectorstore/
+│
 ├── requirements.txt
-├── .gitignore
+│
 └── README.md
 ```
 
-## ⚙️ Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/Hibza-Kudari/rag-chatbot.git
-cd rag-chatbot
-```
-
-Create virtual environment:
-
-```bash
-python -m venv venv312
-```
-
-Activate environment:
-
-```bash
-venv312\Scripts\activate
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Install Ollama model:
-
-```bash
-ollama pull llama3.2
-```
-
 ---
 
-## ▶️ Run
+## 📸 Screenshots
 
-```bash
-streamlit run src/app.py
-```
 
-Open:
+### PDF Upload
+
+Add screenshot here:
 
 ```text
-http://localhost:8501
+screenshots/upload.png
+```
+
+### Question Answering
+
+Add screenshot here:
+
+```text
+screenshots/chat.png
+```
+
+### Document Summary
+
+Add screenshot here:
+
+```text
+screenshots/summary.png
 ```
 
 ---
 
-## 💡 Usage
+## 🔮 Future Enhancements
 
-1. Upload a PDF
-2. Generate a document summary
-3. Ask questions about the PDF
-4. View source references used by the chatbot
+* Multi-PDF Support
+* Citation with Page Numbers
+* ChromaDB / Pinecone Integration
+* Advanced Memory Management
+* Document Comparison
+* Multi-Agent RAG Workflow
 
 ---
 
 ## 👩‍💻 Author
 
 **Hibza Kudari**
+
+AI & Machine Learning Student
+
+Passionate about Generative AI, RAG Systems, LLM Applications, and Intelligent Document Processing.

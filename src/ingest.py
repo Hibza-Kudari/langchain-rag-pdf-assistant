@@ -1,77 +1,94 @@
+from io import BytesIO
+from pathlib import Path
+import os
+
 from pypdf import PdfReader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
-import faiss
-import numpy as np
-import pickle
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 
-print("Reading PDF...")
-
-reader = PdfReader("documents/uploaded.pdf")
-
-full_text = ""
-
-for page in reader.pages:
-    text = page.extract_text()
-
-    if text:
-        full_text += text
-
-print("Chunking document...")
-
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1500,
-    chunk_overlap=100
+from config import (
+    VECTORSTORE_DIR,
+    EMBEDDING_MODEL,
 )
 
-chunks = splitter.split_text(full_text)
 
-print("Number of chunks:", len(chunks))
+def _read_pdf(source):
+    if isinstance(source, (str, Path)):
+        return PdfReader(source)
 
-print("Creating embeddings...")
+    if isinstance(source, bytes):
+        return PdfReader(BytesIO(source))
 
-try:
-    print("Loading model...")
+    return PdfReader(source)
 
-    model = SentenceTransformer("all-MiniLM-L6-v2")
 
-    print("Model loaded!")
+def ingest_pdf(source) -> int:
+    """
+    Build a LangChain FAISS vector store
+    from a PDF path, bytes, or file-like object.
+    """
 
-    embeddings = model.encode(
-        chunks,
-        show_progress_bar=True
+    reader = _read_pdf(source)
+
+    full_text = ""
+
+    for page in reader.pages:
+        text = page.extract_text()
+
+        if text:
+            full_text += text
+
+    if not full_text.strip():
+        raise ValueError(
+            "Could not extract any text from the PDF."
+        )
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1500,
+        chunk_overlap=100,
     )
 
-    print("Embeddings created!")
+    chunks = splitter.split_text(full_text)
 
-except Exception as e:
-    print("ERROR:", e)
-    raise
+    print(f"Total Chunks: {len(chunks)}")
 
-print("Embeddings shape:", embeddings.shape)
+    for i, chunk in enumerate(chunks, start=1):
+        print(f"\n--- CHUNK {i} ---")
+        print(chunk[:300])  # first 300 chars
 
-print("Building FAISS index...")
+    embeddings = HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL
+    )
 
-index = faiss.IndexFlatL2(
-    embeddings.shape[1]
-)
+    vectorstore = FAISS.from_texts(
+        texts=chunks,
+        embedding=embeddings,
+    )
 
-index.add(
-    np.array(embeddings).astype("float32")
-)
+    os.makedirs(
+        VECTORSTORE_DIR,
+        exist_ok=True,
+    )
 
-print("Saving vector database...")
+    vectorstore.save_local(
+        VECTORSTORE_DIR
+    )
 
-faiss.write_index(
-    index,
-    "vectorstore/faiss_index.bin"
-)
+    return len(chunks)
 
-with open(
-    "vectorstore/chunks.pkl",
-    "wb"
-) as f:
-    pickle.dump(chunks, f)
 
-print("Done!")
-print("Chunks:", len(chunks))
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) < 2:
+        print(
+            "Usage: python ingest.py <path-to-pdf>"
+        )
+        sys.exit(1)
+
+    count = ingest_pdf(sys.argv[1])
+
+    print(
+        f"Done! Ingested {count} chunks."
+    )
