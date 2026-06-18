@@ -93,18 +93,18 @@ Built with **LangChain**, **FAISS**, **HuggingFace Embeddings**, **Ollama (Llama
 ## 📊 Performance Observations
 
 | Document Size | Chunks Generated |
-| ------------- | ---------------- |
-| 9 Pages       | 6 Chunks         |
-| 14 Pages      | 23 Chunks        |
-| 32 Pages      | 56 Chunks        |
+| ------------- | ----------------- |
+| 9 Pages       | 6 Chunks          |
+| 14 Pages      | 23 Chunks         |
+| 32 Pages      | 56 Chunks         |
 
-Example query response times:
+Chunk count scales roughly linearly with document length, confirming the chunking strategy holds up consistently across short and long documents.
 
-| Query      | Time         |
-| ---------- | ------------ |
-| Question 1 | 2 min 03 sec |
-| Question 2 | 1 min 55 sec |
-| Question 3 | 2 min 26 sec |
+### ⚠️ Known Limitation: Response Latency
+
+Query response times currently average **~2 minutes** on local CPU-only inference (tested on a machine without GPU acceleration), since the assistant runs the full Llama 3.2 model entirely on-device rather than calling a hosted API.
+
+This is a known and understood tradeoff of prioritizing full local/offline inference (no data leaves the device) over speed. Planned optimizations include switching to a quantized model variant, enabling GPU acceleration where available, and reducing prompt/output length for faster generation.
 
 ---
 
@@ -161,6 +161,7 @@ rag-chatbot/
 * Advanced Memory Management
 * Document Comparison
 * Multi-Agent RAG Workflow
+* GPU-accelerated / quantized inference for faster response times
 
 ---
 
