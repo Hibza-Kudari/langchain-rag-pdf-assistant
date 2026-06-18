@@ -146,26 +146,21 @@ rag-chatbot/
 
 ### PDF Upload
 
-Add screenshot here:
-
 ```text
-screenshots/upload.png
+assets/upload.png
 ```
 
 ### Question Answering
 
-Add screenshot here:
 
 ```text
-screenshots/chat.png
+assets/chat.png
 ```
 
 ### Document Summary
 
-Add screenshot here:
-
 ```text
-screenshots/summary.png
+assets/summary.png
 ```
 
 ---
