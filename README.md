@@ -5,6 +5,11 @@ An intelligent Retrieval-Augmented Generation (RAG) chatbot that allows users to
 Built with **LangChain**, **FAISS**, **Sentence Transformers**, **Groq API**, **Llama 3.3 70B**, and **Streamlit**.
 
 ---
+## 🌐 Live Demo
+
+🚀 **Live App:** https://langchain-rag-pdf-assistant.streamlit.app
+
+---
 
 ## 🚀 Features
 
