@@ -1,12 +1,13 @@
 import os
 import streamlit as st
-from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 
-load_dotenv()
-
+# Load from Streamlit secrets first, then fall back to environment variables
 api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
-model = st.secrets.get("GROQ_MODEL", os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"))
+model = st.secrets.get(
+    "GROQ_MODEL",
+    os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+)
 
 llm = ChatGroq(
     api_key=api_key,
