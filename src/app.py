@@ -1,6 +1,18 @@
 import hashlib
 
 import streamlit as st
+import os
+from dotenv import load_dotenv
+from langchain_groq import ChatGroq
+
+load_dotenv()
+
+llm = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    model=os.getenv("GROQ_MODEL"),
+    api_key=os.getenv("GROQ_API_KEY"),
+    temperature=0,
+)
 
 # ---------------------------------
 # Page Configuration
@@ -87,7 +99,8 @@ with st.sidebar:
 
 ✅ Source References
 
-✅ Local AI (Ollama)
+⚡ Powered by Groq
+
 """
     )
 
@@ -106,7 +119,7 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.caption("Powered by Ollama + FAISS + MiniLM")
+    st.caption("Powered by Groq + FAISS + MiniLM")
 
 # ---------------------------------
 # Main Header
@@ -172,9 +185,6 @@ if st.button(
     else:
         from retriever import get_all_chunks
 
-        import ollama
-        from config import SUMMARY_MODEL
-
         all_chunks = get_all_chunks()
         context = "\n\n".join(all_chunks)[:12000]
 
@@ -201,13 +211,10 @@ Document:
 """
 
         with st.spinner("Generating summary..."):
-            response = ollama.chat(
-                model=SUMMARY_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            response = llm.invoke(prompt)
+            st.subheader("📄 Document Summary")
+            st.markdown(response.content)
 
-        st.subheader("📄 Document Summary")
-        st.markdown(response["message"]["content"])
 
 # ---------------------------------
 # Display Chat History
@@ -232,9 +239,6 @@ if question:
         st.warning("Please upload a PDF before asking questions.")
     else:
         from retriever import retrieve
-
-        import ollama
-        from config import CHAT_MODEL
 
         st.session_state.messages.append(
             {"role": "user", "content": question}
@@ -277,17 +281,9 @@ I could not find that information in the document.
 """
 
         with st.spinner("Generating answer..."):
-            response = ollama.chat(
-                model=CHAT_MODEL,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    }
-                ],
-            )
+            response = llm.invoke(prompt)
 
-        answer = response["message"]["content"]
+            answer = response.content
 
         st.session_state.messages.append(
             {"role": "assistant", "content": answer}
