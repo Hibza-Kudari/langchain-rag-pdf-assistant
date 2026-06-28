@@ -2,7 +2,7 @@
 
 An intelligent Retrieval-Augmented Generation (RAG) chatbot that allows users to upload PDF documents, generate AI-powered summaries, and ask context-aware questions using semantic search and local LLM inference.
 
-Built with **LangChain**, **FAISS**, **HuggingFace Embeddings**, **Ollama (Llama 3.2)**, and **Streamlit**.
+Built with **LangChain**, **FAISS**, **Sentence Transformers**, **Groq API**, **Llama 3.3 70B**, and **Streamlit**.
 
 ---
 
@@ -20,7 +20,7 @@ Built with **LangChain**, **FAISS**, **HuggingFace Embeddings**, **Ollama (Llama
 
 ✅ Source-backed responses
 
-✅ Local LLM inference using Ollama
+✅  Ultra-fast AI responses using Groq Llama 3.3
 
 ✅ Interactive Streamlit UI
 
@@ -100,12 +100,12 @@ Built with **LangChain**, **FAISS**, **HuggingFace Embeddings**, **Ollama (Llama
 
 Chunk count scales roughly linearly with document length, confirming the chunking strategy holds up consistently across short and long documents.
 
-### ⚠️ Known Limitation: Response Latency
+### Performance
 
-Query response times currently average **~2 minutes** on local CPU-only inference (tested on a machine without GPU acceleration), since the assistant runs the full Llama 3.2 model entirely on-device rather than calling a hosted API.
-
-This is a known and understood tradeoff of prioritizing full local/offline inference (no data leaves the device) over speed. Planned optimizations include switching to a quantized model variant, enabling GPU acceleration where available, and reducing prompt/output length for faster generation.
-
+• Semantic search over FAISS vector store
+• Fast response generation via Groq's hosted Llama 3.3 model
+• Supports conversational follow-up questions
+• Efficient retrieval using MiniLM embeddings
 ---
 
 ## 🛠️ Tech Stack
